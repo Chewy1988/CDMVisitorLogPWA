@@ -154,17 +154,28 @@ function render() {
     activeList.appendChild(li);
   });
 }
-
 function exportCSV() {
   let csv = "Name,Sign In,Sign Out\n";
   visits.forEach(v => {
     csv += `${v.name},${v.signIn},${v.signOut || ""}\n`;
   });
 
+  // 📅 Build timestamped filename
+  const now = new Date();
+  const timestamp =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0") + "_" +
+    String(now.getHours()).padStart(2, "0") + "-" +
+    String(now.getMinutes()).padStart(2, "0") + "-" +
+    String(now.getSeconds()).padStart(2, "0");
+
+  const filename = `visitors_${timestamp}.csv`;
+
   const blob = new Blob([csv], { type: "text/csv" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "visitors.csv";
+  link.download = filename;
   link.click();
 
   URL.revokeObjectURL(link.href);
@@ -172,6 +183,7 @@ function exportCSV() {
   // Ask user to confirm download success
   document.getElementById("exportConfirmModal").style.display = "block";
 }
+
 
 
 function requestExport() {
