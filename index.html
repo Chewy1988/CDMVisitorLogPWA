@@ -30,15 +30,12 @@
   .footer { margin-top: 30px; text-align: center; }
   .export { font-size: 20px; padding: 14px 20px; border-radius: 12px; background: grey; color: white; border: none; cursor: pointer; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* Modal base */
-  #confirmModal, #passcodeModal, #exportConfirmModal { display:none; }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); opacity:0; pointer-events:none; transition: opacity 0.3s ease; }
-  .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: white; padding: 25px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25); opacity:0; pointer-events:none; transition: opacity 0.3s ease, transform 0.3s ease; }
-  .modal.show, .modal-backdrop.show { opacity: 1; pointer-events: auto; }
-  .modal.show { transform: translate(-50%, -50%) scale(1); }
+  /* Modals */
+  #confirmModal, #passcodeModal { display:none; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); }
+  .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
   .modal h3 { font-size: 24px; margin-bottom: 10px; }
-  .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
+  .modal-buttons { display: flex; gap: 10px; }
   .modal-buttons button { flex: 1; font-size: 22px; padding: 14px; border-radius: 12px; border: none; cursor: pointer; }
   .modal-buttons .yes { background: #34c759; color: white; }
   .modal-buttons .no { background: #ff3b30; color: white; }
@@ -66,19 +63,7 @@
     <input type="password" id="passcodeInput" placeholder="Enter passcode" />
     <div class="modal-buttons">
       <button class="yes" onclick="checkPasscode()">Submit</button>
-      <button class="no" onclick="closeModal('passcodeModal')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div id="exportConfirmModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal">
-    <h3>Confirm Export</h3>
-    <p>Did the CSV download successfully?</p>
-    <div class="modal-buttons">
-      <button class="yes" onclick="confirmExport(true)">Yes</button>
-      <button class="no" onclick="confirmExport(false)">No</button>
+      <button class="no" onclick="closePasscodeModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -100,33 +85,44 @@
   <ul id="activeList"></ul>
 
   <div class="footer">
-    <button class="export" onclick="requestExport()">Export to CSV</button>
+    <button class="export" onclick="requestExport()">Generate Report</button>
   </div>
 </div>
 
+<div id="exportConfirmModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <h3>Confirm Export</h3>
+    <p>Did the CSV download successfully?</p>
+    <div class="modal-buttons">
+      <button class="yes" onclick="confirmExport(true)">Yes</button>
+      <button class="no" onclick="confirmExport(false)">No</button>
+    </div>
+  </div>
+</div>
+
+  
 <script>
-/* ------------------- Variables ------------------- */
 let visits = JSON.parse(localStorage.getItem("visits")) || [];
 const nameInput = document.getElementById("nameInput");
+  // Reset timer on any input or focus
+nameInput.addEventListener("input", resetNameClearTimer);
+nameInput.addEventListener("focus", resetNameClearTimer);
+
 const activeList = document.getElementById("activeList");
 let pendingSignInName = null;
-let pendingAction = null;
+let pendingAction = null; // "export" or "clear"
 let nameClearTimeout = null;
 
-/* ------------------- Helper Functions ------------------- */
-function openModal(id) {
-  const modal = document.getElementById(id);
-  modal.style.display = "block";
-  requestAnimationFrame(() => modal.classList.add("show"));
-}
 
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  modal.classList.remove("show");
-  setTimeout(() => { modal.style.display = "none"; }, 300);
-}
+window.addEventListener("load", () => {
+  document.getElementById("exportConfirmModal").style.display = "none";
+});
 
-function formatDate(dateString) {
+  
+render();
+
+  function formatDate(dateString) {
   const d = new Date(dateString);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -136,17 +132,18 @@ function formatDate(dateString) {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-/* ------------------- Sign In / Sign Out ------------------- */
+
+// --- Sign In / Out ---
 function signIn() {
   const name = nameInput.value.trim();
   if (!name) return alert("Please enter your name");
   if (visits.find(v => v.name === name && !v.signOut)) return alert("You are already signed in");
   pendingSignInName = name;
-  openModal("confirmModal");
+  document.getElementById("confirmModal").style.display = "block";
 }
 
 function confirmInduction(confirmed) {
-  closeModal("confirmModal");
+  document.getElementById("confirmModal").style.display = "none";
   if (!confirmed) { pendingSignInName = null; return; }
   visits.push({ name: pendingSignInName, signIn: new Date().toISOString(), signOut: null });
   pendingSignInName = null;
@@ -172,100 +169,102 @@ function render() {
   visits.filter(v => !v.signOut).forEach(v => {
     const li = document.createElement("li");
     li.textContent = v.name;
-    li.addEventListener("click", () => { nameInput.value = v.name; resetNameClearTimer(); });
+    li.addEventListener("click", () => { nameInput.value = v.name; });
     activeList.appendChild(li);
   });
 }
-
-/* ------------------- Passcode / Export ------------------- */
-function requestExport() {
-  pendingAction = "export";
-  openModal("passcodeModal");
-  document.getElementById("passcodeInput").value = "";
-  document.getElementById("passcodeInput").focus();
-}
-
-function checkPasscode() {
-  const enteredPasscode = document.getElementById("passcodeInput").value;
-  if (enteredPasscode !== "1234") {
-    alert("Incorrect passcode.");
-    document.getElementById("passcodeInput").value = "";
-    document.getElementById("passcodeInput").focus();
-    return;
-  }
-  closeModal("passcodeModal");
-  if (pendingAction === "export") exportCSV();
-  pendingAction = null;
-}
-
-function backupVisits() {
-  const backup = { timestamp: Date.now(), data: visits };
-  localStorage.setItem("visits_backup", JSON.stringify(backup));
-}
-
-function restoreBackupIfRecent() {
-  const backupStr = localStorage.getItem("visits_backup");
-  if (!backupStr) return;
-  const backup = JSON.parse(backupStr);
-  const FIVE_MINUTES = 5*60*1000;
-  if (Date.now() - backup.timestamp < FIVE_MINUTES) {
-    visits = backup.data;
-    localStorage.setItem("visits", JSON.stringify(visits));
-  } else {
-    localStorage.removeItem("visits_backup");
-  }
-}
-
 function exportCSV() {
-  backupVisits();
   let csv = "Name,Sign In,Sign Out\n";
   visits.forEach(v => {
     csv += `${v.name},${formatDate(v.signIn)},${v.signOut ? formatDate(v.signOut) : ""}\n`;
+
   });
 
+  // 📅 Build timestamped filename
   const now = new Date();
   const timestamp =
     now.getFullYear() + "-" +
-    String(now.getMonth()+1).padStart(2,"0") + "-" +
-    String(now.getDate()).padStart(2,"0") + "_" +
-    String(now.getHours()).padStart(2,"0") + "-" +
-    String(now.getMinutes()).padStart(2,"0");
-  const filename = `visitors_${timestamp}.csv`;
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0") + "_" +
+    String(now.getHours()).padStart(2, "0") + "-" +
+    String(now.getMinutes()).padStart(2, "0") + "-" +
+    String(now.getSeconds()).padStart(2, "0");
+
+  const filename = `CDM Visitors Log_${timestamp}.csv`;
 
   const blob = new Blob([csv], { type: "text/csv" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
+
   URL.revokeObjectURL(link.href);
 
-  openModal("exportConfirmModal");
+  // Ask user to confirm download success
+  document.getElementById("exportConfirmModal").style.display = "block";
+}
+
+
+
+function requestExport() {
+  pendingAction = "export";
+  document.getElementById("passcodeModal").style.display = "block";
+  document.getElementById("passcodeInput").value = "";
+  document.getElementById("passcodeInput").focus();
+}
+
+
+
+function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
+function checkPasscode() {
+  const enteredPasscode = document.getElementById("passcodeInput").value;
+
+  if (enteredPasscode !== "8877") {
+    alert("Incorrect passcode.");
+    document.getElementById("passcodeInput").value = "";
+    document.getElementById("passcodeInput").focus();
+    return;
+  }
+
+  closePasscodeModal();
+
+  if (pendingAction === "export") {
+    exportCSV();
+  }
+
+  pendingAction = null;
 }
 
 function confirmExport(success) {
-  closeModal("exportConfirmModal");
+  document.getElementById("exportConfirmModal").style.display = "none";
+
   if (!success) {
-    alert("Export cancelled. Data restored from backup if available.");
-    restoreBackupIfRecent();
-    render();
+    alert("Export cancelled. Visitor data was not cleared.");
     return;
   }
+
+  // ✅ Clear data only after confirmation
   visits = [];
   localStorage.removeItem("visits");
-  localStorage.removeItem("visits_backup");
   render();
+
   alert("Export confirmed. Visitor data has been cleared.");
 }
-
-/* ------------------- Auto-Clear Name Input ------------------- */
 function resetNameClearTimer() {
+  // Clear any existing timer
   if (nameClearTimeout) clearTimeout(nameClearTimeout);
-  nameClearTimeout = setTimeout(() => { nameInput.value = ""; }, 10000);
-}
-nameInput.addEventListener("input", resetNameClearTimer);
-nameInput.addEventListener("focus", resetNameClearTimer);
 
-/* ------------------- Wake Lock ------------------- */
+  // Start a new 10-second timer
+  nameClearTimeout = setTimeout(() => {
+    nameInput.value = "";
+  }, 10000); // 10,000 ms = 10 seconds
+}
+function pauseNameClearTimer() {
+  if (nameClearTimeout) clearTimeout(nameClearTimeout);
+}
+
+
+// --- Wake Lock ---
 let wakeLock = null;
 async function requestWakeLock() {
   try { wakeLock = await navigator.wakeLock.request('screen'); }
@@ -276,22 +275,22 @@ document.addEventListener('visibilitychange', () => {
 });
 requestWakeLock();
 
-/* ------------------- Fullscreen & Orientation Lock ------------------- */
+// --- Fullscreen ---
 async function requestFullscreen() {
   const elem = document.documentElement;
   if (elem.requestFullscreen) await elem.requestFullscreen();
   else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch(()=>{});
-  }
 }
 window.addEventListener('load', () => {
   if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-    requestFullscreen().catch(()=>{});
+    requestFullscreen().catch(() => {});
   }
 });
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) requestFullscreen().catch(() => {});
+});
 
-/* ------------------- Service Worker Registration ------------------- */
+// --- Service Worker Registration ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
@@ -299,10 +298,6 @@ if ('serviceWorker' in navigator) {
       .catch(error => console.log('Service Worker registration failed:', error));
   });
 }
-
-/* ------------------- Initialize ------------------- */
-restoreBackupIfRecent();
-render();
 </script>
 
 </body>
