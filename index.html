@@ -89,6 +89,19 @@
   </div>
 </div>
 
+<div id="exportConfirmModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <h3>Confirm Export</h3>
+    <p>Did the CSV download successfully?</p>
+    <div class="modal-buttons">
+      <button class="yes" onclick="confirmExport(true)">Yes</button>
+      <button class="no" onclick="confirmExport(false)">No</button>
+    </div>
+  </div>
+</div>
+
+  
 <script>
 let visits = JSON.parse(localStorage.getItem("visits")) || [];
 const nameInput = document.getElementById("nameInput");
@@ -144,13 +157,23 @@ function render() {
 
 function exportCSV() {
   let csv = "Name,Sign In,Sign Out\n";
-  visits.forEach(v => { csv += `${v.name},${v.signIn},${v.signOut || ""}\n`; });
+  visits.forEach(v => {
+    csv += `${v.name},${v.signIn},${v.signOut || ""}\n`;
+  });
+
   const blob = new Blob([csv], { type: "text/csv" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "visitors.csv";
   link.click();
+
+  URL.revokeObjectURL(link.href);
+
+  // Ask user to confirm download success
+  document.getElementById("exportConfirmModal").style.display = "block";
 }
+
+
 function requestExport() {
   pendingAction = "export";
   document.getElementById("passcodeModal").style.display = "block";
@@ -191,6 +214,21 @@ function checkPasscode() {
   pendingAction = null;
 }
 
+function confirmExport(success) {
+  document.getElementById("exportConfirmModal").style.display = "none";
+
+  if (!success) {
+    alert("Export cancelled. Visitor data was not cleared.");
+    return;
+  }
+
+  // ✅ Clear data only after confirmation
+  visits = [];
+  localStorage.removeItem("visits");
+  render();
+
+  alert("Export confirmed. Visitor data has been cleared.");
+}
 
 
 // --- Wake Lock ---
