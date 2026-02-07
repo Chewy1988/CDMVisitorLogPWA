@@ -97,7 +97,9 @@ let pendingSignInName = null;
 let pendingAction = null; // "export" or "clear"
 
 
+autoClearOldData();
 render();
+
 
 // --- Sign In / Out ---
 function signIn() {
@@ -156,6 +158,17 @@ function requestExport() {
   document.getElementById("passcodeInput").focus();
 }
 
+function autoClearOldData() {
+  const now = Date.now();
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+
+  visits = visits.filter(v => {
+    const signInTime = new Date(v.signIn).getTime();
+    return (now - signInTime) < ONE_DAY;
+  });
+
+  localStorage.setItem("visits", JSON.stringify(visits));
+}
 
 
 function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
