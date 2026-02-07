@@ -86,7 +86,6 @@
 
   <div class="footer">
     <button class="export" onclick="requestExport()">Export to CSV</button>
-    <button class="export" onclick="clearData()">Clear Old Data</button>
   </div>
 </div>
 
@@ -157,12 +156,6 @@ function requestExport() {
   document.getElementById("passcodeInput").focus();
 }
 
-function clearData() {
-  pendingAction = "clear";
-  document.getElementById("passcodeModal").style.display = "block";
-  document.getElementById("passcodeInput").value = "";
-  document.getElementById("passcodeInput").focus();
-}
 
 
 function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
@@ -182,15 +175,9 @@ function checkPasscode() {
     exportCSV();
   }
 
-  if (pendingAction === "clear") {
-    localStorage.removeItem("visits");
-    visits = [];
-    render();
-    alert("All visitor data has been cleared.");
-  }
-
   pendingAction = null;
 }
+
 
 
 // --- Wake Lock ---
