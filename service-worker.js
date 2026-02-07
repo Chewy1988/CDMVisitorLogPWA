@@ -47,7 +47,7 @@ self.addEventListener("fetch", event => {
         if (response) return response;
         // Otherwise, fetch from network
         return fetch(event.request).catch(() => {
-          // Optional fallback for missing files
+          // Optional fallback for HTML pages
           if (event.request.destination === "document") {
             return caches.match("/index.html");
           }
