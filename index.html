@@ -109,7 +109,11 @@ const activeList = document.getElementById("activeList");
 let pendingSignInName = null;
 let pendingAction = null; // "export" or "clear"
 
+window.addEventListener("load", () => {
+  document.getElementById("exportConfirmModal").style.display = "none";
+});
 
+  
 autoClearOldData();
 render();
 
