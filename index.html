@@ -282,7 +282,7 @@ async function requestFullscreen() {
   if (elem.requestFullscreen) await elem.requestFullscreen();
   else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
   if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('portrait').catch(()=>{});
+    screen.orientation.lock('landscape').catch(()=>{});
   }
 }
 window.addEventListener('load', () => {
