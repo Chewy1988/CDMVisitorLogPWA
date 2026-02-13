@@ -1,12 +1,18 @@
+// manifest.json
 {
   "name": "iPad Visitor Log",
-  "short_name": "VisitorLog",
+  "short_name": "Visitor Log",
+  "description": "Project Argo CDM Area visitor sign in/out log.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f2f2f7",
+  "background_color": "#ffffff",
   "theme_color": "#34c759",
+  "orientation": "landscape",
+
   "icons": [
-    { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "logo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
