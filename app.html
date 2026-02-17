@@ -706,25 +706,16 @@
     // Buttons
     signInBtn.addEventListener("click", signIn);
     signOutBtn.addEventListener("click", signOut);
+    
+// Admin shortcut: single tap title
+hdrTitleEl.addEventListener("click", () => {
+  pendingAction = "admin";
+  passcodeInput.value = "";
+  openModal(passcodeModal);
+  setTimeout(() => passcodeInput.focus(), 50);
+  resetIdleTimer();
+});
 
-    // Hidden admin shortcut: triple-tap title within ~1 second
-    let titleTapCount = 0;
-    let titleTapTimer = null;
-
-    hdrTitleEl.addEventListener("click", () => {
-      titleTapCount++;
-      clearTimeout(titleTapTimer);
-      titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 900);
-
-      if (titleTapCount >= 3) {
-        titleTapCount = 0;
-        pendingAction = "admin";
-        passcodeInput.value = "";
-        openModal(passcodeModal);
-        setTimeout(() => passcodeInput.focus(), 50);
-        resetIdleTimer();
-      }
-    });
 
     confirmYes.addEventListener("click", () => confirmInduction(true));
     confirmNo.addEventListener("click", () => confirmInduction(false));
