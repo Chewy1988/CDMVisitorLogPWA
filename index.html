@@ -43,7 +43,7 @@
       place-items: center;
       text-align: center;
       border-radius: 24px;
-      border: 1px solid #white;
+      border: 1px solid white;
       padding: 28px;
     }
 
@@ -57,7 +57,7 @@
     }
 
     h1{
-      margin: 20;
+      margin: 20px;
       font-size: 40px;
       letter-spacing: -0.02em;
       color: #111827;
@@ -71,7 +71,7 @@
     }
 
     .hint{
-      margin: 20;
+      margin: 20px;
       font-size: 24px;
       color: #6b7280;
       font-weight: 650;
@@ -90,8 +90,29 @@
   </main>
 
   <script>
-    // If you’ve renamed your main app page to app.html, send users there.
-    // (Your new index.html should be the start page containing this code.)
+    // ============================================================
+    //  SERVICE WORKER REGISTER (required for offline to work!)
+    //  Fixed for iOS Home Screen: reload once if not controlled yet.
+    // ============================================================
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("./service-worker.js");
+
+          // On iOS, the first load is often not controlled yet.
+          // Reload once after SW is ready so offline caching applies.
+          if (!navigator.serviceWorker.controller) {
+            await navigator.serviceWorker.ready;
+            location.reload();
+          }
+        } catch (e) {
+          console.log("SW registration failed:", e);
+        }
+      });
+    }
+    // ============================================================
+
+    // Send users to the main app page
     function go() {
       window.location.href = "app.html";
     }
@@ -101,7 +122,7 @@
       if (e.key === "Enter" || e.key === " ") go();
     });
 
-    // extra: any tap/click anywhere on the page also works
+    // Extra: any tap/click anywhere on the page also works
     document.addEventListener("pointerdown", () => go(), { once: true });
   </script>
 </body>
